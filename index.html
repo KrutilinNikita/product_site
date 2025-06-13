@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Каталог товаров</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .product-card {
+      transition: all 0.3s ease;
+    }
+    .product-details {
+      display: none;
+    }
+    .product-card.show-details .product-details {
+      display: block;
+    }
+    .product-card.show-details .show-details-btn {
+      display: none;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="mb-6">
+      <input type="text" 
+             id="searchInput" 
+             placeholder="Поиск по названию..." 
+             class="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
+    
+    <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <!-- Здесь будут карточки товаров -->
+    </div>
+  </div>
+
+  <script>
+    // Загрузка данных
+    async function loadProducts() {
+      try {
+        const response = await fetch('./products.json');
+        const products = await response.json();
+        displayProducts(products);
+      } catch (error) {
+        console.error('Ошибка загрузки данных:', error);
+      }
+    }
+
+    // Отображение товаров
+    function displayProducts(products) {
+      const grid = document.getElementById('productsGrid');
+      grid.innerHTML = '';
+
+      products.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card bg-white rounded-lg shadow-md overflow-hidden';
+        card.innerHTML = `
+          <img src="products/${product.image}" 
+               alt="${product.title}" 
+               class="w-full h-48 object-cover">
+          <div class="p-4">
+            <h3 class="text-lg font-semibold mb-2">${product.title}</h3>
+            <button class="show-details-btn bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors">
+              Показать подробности
+            </button>
+            <div class="product-details mt-4">
+              <p class="text-gray-600 mb-2">
+                <span class="font-semibold">Цена:</span> 
+                ${product.price ? `${product.price} ₽` : 'Нет в наличии'}
+              </p>
+              <p class="text-gray-600 mb-2">
+                <span class="font-semibold">Поставщик:</span> 
+                ${product.supplier || 'Нет поставщика'}
+              </p>
+              ${product.supplier_2 && product.supplier_2.toLowerCase() !== 'nan' ? `
+                <p class="text-gray-600 mb-2">
+                  <span class="font-semibold">Второй поставщик:</span> 
+                  ${product.supplier_2}
+                </p>
+              ` : ''}
+              <div class="text-gray-600">
+                <p class="font-semibold mb-1">Размеры:</p>
+                <ul class="list-disc list-inside">
+                  ${product.dimensions.width ? `<li>Ширина: ${product.dimensions.width} см</li>` : ''}
+                  ${product.dimensions.height ? `<li>Высота: ${product.dimensions.height} см</li>` : ''}
+                  ${product.dimensions.depth ? `<li>Глубина: ${product.dimensions.depth} см</li>` : ''}
+                </ul>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Обработчик клика по кнопке
+        const showDetailsBtn = card.querySelector('.show-details-btn');
+        showDetailsBtn.addEventListener('click', () => {
+          card.classList.add('show-details');
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    // Поиск
+    document.getElementById('searchInput').addEventListener('input', async (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const response = await fetch('./products.json');
+      const products = await response.json();
+      
+      const filteredProducts = products.filter(product => 
+        product.title.toLowerCase().includes(searchTerm)
+      );
+      
+      displayProducts(filteredProducts);
+    });
+
+    // Загрузка товаров при загрузке страницы
+    loadProducts();
+  </script>
+</body>
+</html> 
